@@ -11,6 +11,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.util.Random;
 
 public class WebCrawlerGUI extends JFrame {
 
@@ -53,7 +54,7 @@ public class WebCrawlerGUI extends JFrame {
                 url = crawlPage(url);
                 try {
                     // Introduce a delay between requests
-                    Thread.sleep(1000);
+                    Thread.sleep(randomTime(500, 5000));
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -62,6 +63,16 @@ public class WebCrawlerGUI extends JFrame {
                 break;
             }
         }
+    }
+
+    private int randomTime(int min, int max){
+        // Create an instance of Random class
+        Random random = new Random();
+
+        // Generate a random number between min and max (inclusive)
+        int randomNumber = random.nextInt(max - min + 1) + min;
+
+        return  randomNumber;
     }
 
     private boolean isAllowedToCrawl(String url) {
