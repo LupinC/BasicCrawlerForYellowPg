@@ -1,5 +1,6 @@
 package com.company;
 
+import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -16,6 +17,8 @@ public class WebCrawlerGUI extends JFrame {
     private JTextField urlTextField;
     private JButton startButton;
     private JTextArea resultTextArea;
+
+    private String userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36";
 
     public WebCrawlerGUI() {
         setTitle("Web Crawler");
@@ -46,13 +49,49 @@ public class WebCrawlerGUI extends JFrame {
     private void crawlWebsite() {
         String url = urlTextField.getText().trim();
         while (url != null) {
-            url = crawlPage(url);
+            if (isAllowedToCrawl(url)) {
+                url = crawlPage(url);
+                try {
+                    // Introduce a delay between requests
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                resultTextArea.append("URL not allowed: " + url + "\n");
+                break;
+            }
         }
+    }
+
+    private boolean isAllowedToCrawl(String url) {
+        try {
+            String robotsTxtUrl = url + "/robots.txt";
+            Connection connection = Jsoup.connect(robotsTxtUrl)
+                    .userAgent(userAgent)
+                    .timeout(5000);
+            Document document = connection.get();
+
+            Elements disallowElements = document.select("Disallow");
+            for (Element disallowElement : disallowElements) {
+                String disallowedPattern = disallowElement.text();
+                if (url.matches(disallowedPattern)) {
+                    return false;
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return true;
     }
 
     private String crawlPage(String url) {
         try {
-            Document document = Jsoup.connect(url).get();
+            Connection connection = Jsoup.connect(url)
+                    .userAgent(userAgent)
+                    .timeout(5000);
+            Document document = connection.get();
 
             Elements businessNames = document.select(".business-name");
             Elements addresses = document.select(".street-address");
@@ -74,9 +113,7 @@ public class WebCrawlerGUI extends JFrame {
                     return nextPage;
                 }
             }
-        } catch (IndexOutOfBoundsException ignored){
-
-        }catch (IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
@@ -90,6 +127,3 @@ public class WebCrawlerGUI extends JFrame {
         });
     }
 }
-
-
-
